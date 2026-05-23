@@ -91,7 +91,7 @@ POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 POSTGRES_DB=chatapp
 
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/chatapp
+DATABASE_URL=
 
 # Auth
 JWT_SECRET_KEY=your_secret_key
