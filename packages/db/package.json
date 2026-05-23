@@ -1,0 +1,32 @@
+{
+  "name": "@chatapp/db",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./drizzle/*": "./drizzle/*.ts"
+  },
+  "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "tsx src/seed.ts",
+    "db:studio": "drizzle-kit studio",
+    "type-check": "tsc --noEmit",
+    "db:pull": "drizzle-kit pull"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.2",
+    "pg": "^8.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.12.4",
+    "@types/pg": "^8.20.0",
+    "dotenv": "^17.4.2",
+    "drizzle-kit": "^0.31.10",
+    "drizzle-zod": "^0.8.3",
+    "tsx": "^4.22.3",
+    "zod": "^4.4.3"
+  }
+}

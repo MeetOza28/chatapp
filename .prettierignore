@@ -1,0 +1,6 @@
+node_modules
+.next
+dist
+migrations
+*.lock
+pnpm-lock.yaml

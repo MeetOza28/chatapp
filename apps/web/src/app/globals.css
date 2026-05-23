@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background:         220 25% 97%;
+    --foreground:         224 71% 4%;
+    --card:               0 0% 100%;
+    --card-foreground:    224 71% 4%;
+    --popover:            0 0% 100%;
+    --popover-foreground: 224 71% 4%;
+    --primary:            262 83% 58%;
+    --primary-foreground: 210 20% 98%;
+    --secondary:          220 14% 93%;
+    --secondary-foreground:224 71% 4%;
+    --muted:              220 14% 93%;
+    --muted-foreground:   220 9% 46%;
+    --accent:             262 83% 96%;
+    --accent-foreground:  262 83% 38%;
+    --destructive:        0 84% 60%;
+    --destructive-foreground: 210 20% 98%;
+    --border:             220 13% 88%;
+    --input:              220 13% 88%;
+    --ring:               262 83% 58%;
+    --radius:             0.625rem;
+
+    /* Chat specific */
+    --chat-own-bg:        262 83% 58%;
+    --chat-own-fg:        0 0% 100%;
+    --chat-other-bg:      0 0% 100%;
+    --chat-other-fg:      224 71% 4%;
+    --sidebar-bg:         262 30% 15%;
+    --sidebar-fg:         262 10% 90%;
+    --sidebar-active:     262 83% 58%;
+  }
+
+  .dark {
+    --background:         224 71% 4%;
+    --foreground:         210 20% 98%;
+    --card:               224 60% 8%;
+    --card-foreground:    210 20% 98%;
+    --popover:            224 60% 8%;
+    --popover-foreground: 210 20% 98%;
+    --primary:            263 70% 65%;
+    --primary-foreground: 224 71% 4%;
+    --secondary:          215 28% 14%;
+    --secondary-foreground:210 20% 98%;
+    --muted:              215 28% 14%;
+    --muted-foreground:   217 11% 60%;
+    --accent:             263 40% 20%;
+    --accent-foreground:  263 70% 80%;
+    --destructive:        0 63% 51%;
+    --destructive-foreground: 210 20% 98%;
+    --border:             215 28% 18%;
+    --input:              215 28% 18%;
+    --ring:               263 70% 65%;
+
+    --chat-own-bg:        263 70% 55%;
+    --chat-own-fg:        0 0% 100%;
+    --chat-other-bg:      215 28% 14%;
+    --chat-other-fg:      210 20% 98%;
+    --sidebar-bg:         224 71% 6%;
+    --sidebar-fg:         210 20% 85%;
+    --sidebar-active:     263 70% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-border rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/50;
+}
+
+/* SweetAlert2 dark mode fix */
+.swal2-popup {
+  border-radius: 1rem !important;
+}
