@@ -94,8 +94,8 @@ async def _get_last_messages(room_id: str, db: AsyncSession, limit: int = 10) ->
 
 async def _find_session_row(token: str, db: AsyncSession):
     decoded = unquote(token)
-    if "." in decoded:
-        decoded = decoded.split(".")[0]
+    # if "." in decoded:
+    #     decoded = decoded.split(".")[0]
     
     print(f"[WS] Looking up token (first 20 chars): {decoded[:20]}...")  # ← add this
 
@@ -183,6 +183,7 @@ async def websocket_endpoint(
     websocket: WebSocket,
     token:     str | None = Query(default=None),
 ):
+    print("[WS] HIT ENDPOINT")
     # ── 1. Validate session token ───────────────────────────
     row = None
     async with AsyncSessionLocal() as db:
@@ -193,6 +194,8 @@ async def websocket_endpoint(
             row = await _find_session_row(candidate, db)
             if row:
                 break
+    print("[WS] token:", token)
+    print("[WS] row:", row)
     if not row:
         await websocket.close(code=4001, reason="Invalid or expired session")
         return
@@ -221,11 +224,18 @@ async def websocket_endpoint(
         while True:
             try:
                 data = await websocket.receive_json()
+            except WebSocketDisconnect:
+                raise
             except Exception:
+                if not manager.is_active_socket(user_id, websocket):
+                    break
                 await manager.send_to_user(user_id, {
                     "type": "error", "code": 4030, "detail": "Invalid JSON",
                 })
                 continue
+
+            if not manager.is_active_socket(user_id, websocket):
+                break
 
             msg_type = data.get("type", "")
             room_id  = data.get("room_id", "")
@@ -260,7 +270,7 @@ async def websocket_endpoint(
                         })
                         continue
 
-                    await manager.join_room(user_id, room_id, join_db)
+                    await manager.join_room(user_id, room_id)
 
             # ── Leave room ────────────────────────────────
             elif msg_type == "leave_room":
@@ -347,8 +357,8 @@ async def websocket_endpoint(
                         exclude_user_id=user_id,
                     )
 
-            elif msg_type == "pong":
-                pass  # heartbeat response
+            # elif msg_type == "pong":
+            #     pass  # heartbeat response
 
             else:
                 await manager.send_to_user(user_id, {
@@ -356,15 +366,17 @@ async def websocket_endpoint(
                     "detail": f"Unknown type: {msg_type}",
                 })
 
+    # ... inside your @router.websocket("/ws") loop ...
     except WebSocketDisconnect:
-        await manager.disconnect(user_id)
+        # Pass the websocket object to prevent cleaning up a newly refreshed socket
+        await manager.disconnect(user_id, websocket)
 
     except asyncio.CancelledError:
-        await manager.disconnect(user_id)
+        await manager.disconnect(user_id, websocket)
 
     except Exception as e:
         print(f"[WS] Error user={user_id}: {type(e).__name__}: {e}")
         try:
-            await manager.disconnect(user_id)
+            await manager.disconnect(user_id, websocket)
         except Exception:
             pass

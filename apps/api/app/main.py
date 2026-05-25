@@ -1,3 +1,6 @@
+import uvloop
+uvloop.install()
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status

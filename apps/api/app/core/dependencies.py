@@ -16,10 +16,9 @@ from app.core.security import verify_token
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.APP_ENV == "development",
-    pool_size=5,
-    max_overflow=10,
     pool_pre_ping=True,
-    pool_recycle=3600,
+    pool_size=10,
+    max_overflow=20,
 )
 
 AsyncSessionLocal = async_sessionmaker(

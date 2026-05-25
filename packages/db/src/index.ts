@@ -5,4 +5,4 @@ export { Pool } from 'pg';
 
 
 // export { db } from "./db";
-// export * from "./drizzle/schema";
+// export * from "../drizzle/schema";
