@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import String, Text, DateTime, ForeignKey, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
 
@@ -42,6 +42,12 @@ class Message(Base):
         server_default=func.now(),
         nullable=False,
         index=True,
+    )
+
+    sender: Mapped["User | None"] = relationship(
+        "User",
+        foreign_keys=[sender_id],
+        lazy="selectin",
     )
 
     def __repr__(self) -> str:

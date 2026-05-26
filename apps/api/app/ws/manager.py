@@ -7,10 +7,9 @@ import json
 from typing import Optional
 
 from fastapi import WebSocket
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import AsyncSessionLocal
+from app.db.queries import fetch_room_messages_as_dicts
 
 MAX_CONNECTIONS = 10000
 
@@ -121,7 +120,7 @@ class ConnectionManager:
             return
 
         async with AsyncSessionLocal() as db:
-            history = await self._fetch_history(room_id, db)
+            history = await fetch_room_messages_as_dicts(db, room_id, limit=50)
 
         if self.connections.get(user_id) != ws or self.user_rooms.get(user_id) != room_id:
             return
@@ -203,38 +202,5 @@ class ConnectionManager:
             return True
         except Exception:
             return False
-
-    async def _fetch_history(self, room_id: str, db: AsyncSession, limit: int = 50) -> list[dict]:
-        try:
-            result = await db.execute(
-                text("""
-                    SELECT m.id, m.room_id, m.sender_id,
-                           COALESCE(u.username, u.name, 'deleted user') AS sender_username,
-                           m.content, m.message_type, m.sent_at
-                    FROM   message m
-                    LEFT   JOIN "user" u ON u.id = m.sender_id
-                    WHERE  m.room_id = :room_id
-                    ORDER  BY m.sent_at DESC
-                    LIMIT  :limit
-                """),
-                {"room_id": room_id, "limit": limit},
-            )
-            rows = result.fetchall()
-            return [
-                {
-                    "id":              str(row.id),
-                    "room_id":         str(row.room_id),
-                    "sender_id":       str(row.sender_id) if row.sender_id else None,
-                    "sender_username": row.sender_username,
-                    "content":         row.content,
-                    "message_type":    row.message_type,
-                    "sent_at":         row.sent_at.isoformat() if row.sent_at else None,
-                }
-                for row in reversed(rows)
-            ]
-        except Exception as e:
-            print(f"[WS] History fetch failed: {e}")
-            return []
-
 
 manager = ConnectionManager()

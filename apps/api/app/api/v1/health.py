@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text
+from sqlalchemy import select
 
 from app.core.config import settings
 from app.core.dependencies import get_db
@@ -32,7 +32,7 @@ async def health_deep(db: AsyncSession = Depends(get_db)):
 
     try:
         # Simple query to verify DB is reachable
-        await db.execute(text("SELECT 1"))
+        await db.scalar(select(1))
     except Exception as e:
         db_status = "error"
         db_error = str(e)

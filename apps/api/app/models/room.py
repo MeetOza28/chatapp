@@ -73,6 +73,7 @@ class RoomMember(Base):
         "Room",
         back_populates="members",
     )
+    user: Mapped["User"] = relationship("User", lazy="selectin")
 
     def __repr__(self) -> str:
         return f"<RoomMember room={self.room_id} user={self.user_id}>"

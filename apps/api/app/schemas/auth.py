@@ -1,6 +1,4 @@
 from datetime import datetime
-from uuid import UUID
-
 from pydantic import BaseModel, EmailStr, field_validator, Field
 
 
@@ -45,10 +43,9 @@ class TokenResponse(BaseModel):
 
 
 class UserPublic(BaseModel):
-    id: UUID
-    username: str
+    id: str
+    username: str | None = None
     email: str
     created_at: datetime
 
-    # Allow SQLAlchemy model instances to be passed directly
     model_config = {"from_attributes": True}

@@ -17,6 +17,7 @@ from app.core.security import (
     verify_token,
 )
 from app.core.config import settings
+from app.models.account import Account
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
 from app.schemas.auth import (
@@ -91,17 +92,32 @@ async def register(
             detail="Email is already registered",
         )
 
-    # 4. Hash password (bcrypt cost 12)
+    user_id = str(uuid.uuid4())
     hashed = hash_password(body.password)
+    now = datetime.now(timezone.utc)
 
-    # 5. Insert new user
     new_user = User(
+        id=user_id,
+        name=username,
         username=username,
         email=email,
-        password_hash=hashed,
+        email_verified=False,
+        created_at=now,
+        updated_at=now,
     )
     db.add(new_user)
-    await db.flush()     # write to DB within transaction, get the id back
+    await db.flush()
+
+    db.add(Account(
+        id=str(uuid.uuid4()),
+        account_id=user_id,
+        provider_id="credential",
+        user_id=user_id,
+        password=hashed,
+        created_at=now,
+        updated_at=now,
+    ))
+    await db.flush()
     await db.refresh(new_user)
 
     return UserPublic.model_validate(new_user)
@@ -122,13 +138,20 @@ async def login(
 ) -> TokenResponse:
     email = body.email.lower().strip()
 
-    # 1. Look up user by email
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
 
-    # 2. Verify password — same error for missing user or wrong password
-    #    This prevents user enumeration attacks
-    if user is None or not verify_password(body.password, user.password_hash):
+    password_hash: str | None = None
+    if user is not None:
+        acct = await db.execute(
+            select(Account.password).where(
+                Account.user_id == user.id,
+                Account.provider_id == "credential",
+            )
+        )
+        password_hash = acct.scalar_one_or_none()
+
+    if user is None or not password_hash or not verify_password(body.password, password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",

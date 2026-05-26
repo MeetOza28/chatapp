@@ -26,14 +26,13 @@ Message types server → client:
 import asyncio
 import uuid
 from datetime import datetime, timezone
-from urllib.parse import unquote
-
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
-from sqlalchemy import select, text
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import AsyncSessionLocal
 from app.core.sanitize import clean_text
+from app.db.queries import fetch_room_messages_as_dicts, find_session_user_for_ws
 from app.models.message import Message
 from app.models.room import Room, RoomMember
 from app.ws.manager import manager
@@ -59,56 +58,6 @@ async def _persist_message(
         except Exception as e:
             print(f"[WS] Persist failed {message_id}: {e}")
             await session.rollback()
-
-
-async def _get_last_messages(room_id: str, db: AsyncSession, limit: int = 10) -> list[dict]:
-    result = await db.execute(
-        text("""
-            SELECT m.id,
-                   m.room_id,
-                   m.sender_id,
-                   COALESCE(u.username, u.name, 'deleted user') AS sender_username,
-                   m.content,
-                   m.message_type,
-                   m.sent_at
-            FROM   message m
-            LEFT   JOIN "user" u ON u.id = m.sender_id
-            WHERE  m.room_id  = :room_id
-            ORDER  BY m.sent_at DESC LIMIT :limit
-        """),
-        {"room_id": room_id, "limit": limit},
-    )
-    return [
-        {
-            "id":              str(r.id),
-            "room_id":         str(r.room_id),
-            "sender_id":       str(r.sender_id) if r.sender_id else None,
-            "sender_username": r.sender_username,
-            "content":         r.content,
-            "message_type":    r.message_type,
-            "sent_at":         r.sent_at.isoformat() if r.sent_at else None,
-        }
-        for r in reversed(result.fetchall())
-    ]
-
-
-async def _find_session_row(token: str, db: AsyncSession):
-    decoded = unquote(token)
-    # if "." in decoded:
-    #     decoded = decoded.split(".")[0]
-    
-    print(f"[WS] Looking up token (first 20 chars): {decoded[:20]}...")  # ← add this
-
-    result = await db.execute(
-        text("""
-            SELECT s.user_id, u.username, u.name
-            FROM   session s
-            JOIN   "user" u ON u.id = s.user_id
-            WHERE  s.token = :token AND s.expires_at > NOW()
-        """),
-        {"token": decoded},
-    )
-    return result.fetchone()
 
 
 async def handle_ai_reply(
@@ -139,7 +88,7 @@ async def handle_ai_reply(
         return
 
     async with AsyncSessionLocal() as db:
-        context = await _get_last_messages(room_id, db, limit=10)
+        context = await fetch_room_messages_as_dicts(db, room_id, limit=10)
 
     try:
         reply = await asyncio.wait_for(
@@ -183,25 +132,21 @@ async def websocket_endpoint(
     websocket: WebSocket,
     token:     str | None = Query(default=None),
 ):
-    print("[WS] HIT ENDPOINT")
     # ── 1. Validate session token ───────────────────────────
-    row = None
+    session_user = None
     async with AsyncSessionLocal() as db:
         for candidate in (token, websocket.cookies.get("chatapp.session_token")):
-            print(f"[WS] Trying token candidate: {candidate}")
             if not candidate:
                 continue
-            row = await _find_session_row(candidate, db)
-            if row:
+            session_user = await find_session_user_for_ws(db, candidate)
+            if session_user:
                 break
-    print("[WS] token:", token)
-    print("[WS] row:", row)
-    if not row:
+
+    if not session_user:
         await websocket.close(code=4001, reason="Invalid or expired session")
         return
 
-    user_id  = row.user_id
-    username = row.username or row.name or "user"
+    user_id, username, _name = session_user
 
     # ── 2. Connect (one socket per user) ────────────────────
     connected = await manager.connect(
