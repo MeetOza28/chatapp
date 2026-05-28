@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}
+  IMAGE_PREFIX: ghcr.io/meetoza28
 
 jobs:
   build:
@@ -103,8 +103,8 @@ jobs:
           file: apps/web/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/chatapp-web:latest
-            ghcr.io/${{ github.repository_owner }}/chatapp-web:${{ github.sha }}
+            ${{ env.IMAGE_PREFIX }}/chatapp-web:latest
+            ${{ env.IMAGE_PREFIX }}/chatapp-web:${{ github.sha }}
           build-args: |
             BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
             BETTER_AUTH_URL=${{ secrets.BETTER_AUTH_URL }}
@@ -120,8 +120,8 @@ jobs:
           file: apps/api/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/chatapp-api:latest
-            ghcr.io/${{ github.repository_owner }}/chatapp-api:${{ github.sha }}
+            ${{ env.IMAGE_PREFIX }}/chatapp-api:latest
+            ${{ env.IMAGE_PREFIX }}/chatapp-api:${{ github.sha }}
 
       # ── 16. Done ──────────────────────────────────────────
       - name: Build summary
@@ -131,6 +131,6 @@ jobs:
           echo "✅ Frontend built"
           echo "✅ Backend built"
           echo "✅ Images pushed to GHCR"
-          echo "ghcr.io/${{ github.repository_owner }}/chatapp-web:${{ github.sha }}"
-          echo "ghcr.io/${{ github.repository_owner }}/chatapp-api:${{ github.sha }}"
+          echo "${{ env.IMAGE_PREFIX }}/chatapp-web:${{ github.sha }}"
+          echo "${{ env.IMAGE_PREFIX }}/chatapp-api:${{ github.sha }}"
           echo "=================================="
