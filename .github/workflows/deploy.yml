@@ -10,6 +10,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/meetoza28
 
 jobs:
   deploy:
@@ -39,12 +40,16 @@ jobs:
 
       # ── 4. Pull images from GHCR ──────────────────────────
       - name: Pull web image
+        env:
+          IMAGE_TAG: ${{ github.event.inputs.image_tag }}
         run: |
-          docker pull ghcr.io/${{ github.repository_owner }}/chatapp-web:${{ github.event.inputs.image_tag }}
+          docker pull ${IMAGE_PREFIX}/chatapp-web:${IMAGE_TAG}
 
       - name: Pull api image
+        env:
+          IMAGE_TAG: ${{ github.event.inputs.image_tag }}
         run: |
-          docker pull ghcr.io/${{ github.repository_owner }}/chatapp-api:${{ github.event.inputs.image_tag }}
+          docker pull ${IMAGE_PREFIX}/chatapp-api:${IMAGE_TAG}
 
       # ── 5. Run containers ─────────────────────────────────
       - name: Run containers
