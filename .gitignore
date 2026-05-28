@@ -3,10 +3,16 @@ node_modules/
 .pnpm-store/
 
 # Build outputs
+.next/
 dist/
 build/
-.next/
 out/
+
+.git
+**/.venv
+**/__pycache__
+**/*.pyc
+dump.rdb
 
 # Turborepo
 .turbo/

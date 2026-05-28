@@ -39,7 +39,10 @@ export async function GET(
     id:             r.id,
     roomId:         r.roomId,
     senderId:       r.senderId,
-    senderUsername: r.senderUsername ?? "deleted user",
+    senderUsername:
+      r.senderId === null && r.messageType === "ai"
+        ? "AI Assistant"
+        : r.senderUsername ?? "deleted user",
     content:        r.content,
     messageType:    r.messageType,
     sentAt:         r.sentAt,

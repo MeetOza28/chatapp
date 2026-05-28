@@ -35,6 +35,8 @@ export async function GET() {
       const [lastMsg] = await db
         .select({
           content:        message.content,
+          senderId:       message.senderId,
+          messageType:    message.messageType,
           senderUsername: user.username,
           sentAt:         message.sentAt,
         })
@@ -53,7 +55,10 @@ export async function GET() {
         lastMessage: lastMsg
           ? {
               content:        lastMsg.content,
-              senderUsername: lastMsg.senderUsername ?? "deleted user",
+              senderUsername:
+                lastMsg.senderId === null && lastMsg.messageType === "ai"
+                  ? "AI Assistant"
+                  : lastMsg.senderUsername ?? "deleted user",
               sentAt:         lastMsg.sentAt,
             }
           : null,

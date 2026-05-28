@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+
+# Node
+node_modules
+.pnpm-store
+.next
+.turbo
+dist
+build
+out
+
+# Python
+**/.venv
+**/__pycache__
+**/*.pyc
+
+# Env
+.env
+.env.*
+
+# IDE
+.vscode
+.idea
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+
+# Docker volumes
+postgres_data
+
+# Redis
+dump.rdb
+
+# Coverage
+coverage
+htmlcov
+.pytest_cache
+
+# Temp
+tmp
+temp
+.cache

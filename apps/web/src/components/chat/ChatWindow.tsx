@@ -45,8 +45,8 @@ export function ChatWindow({
   useEffect(() => {
     let cancelled = false;
     setRoomName(""); setError(null);
-    apiGet<{ id: string; name: string; owner_id: string | null }>(`/api/rooms/${roomId}`)
-      .then(room => { if (!cancelled) { setRoomName(room.name); setOwnerId(room.owner_id); } })
+    apiGet<{ id: string; name: string; ownerId: string | null }>(`/api/rooms/${roomId}`)
+      .then(room => { if (!cancelled) { setRoomName(room.name); setOwnerId(room.ownerId); } })
       .catch(() => { if (!cancelled) setError("Failed to load room"); });
     return () => { cancelled = true; };
   }, [roomId]);

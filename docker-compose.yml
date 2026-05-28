@@ -1,7 +1,4 @@
-# version: "3.9"
-
 services:
-  # ── PostgreSQL ─────────────────────────────────────────────
   postgres:
     image: postgres:15-alpine
     container_name: chatapp_postgres
@@ -16,52 +13,55 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 5
-      start_period: 10s
 
-  
-
-  # ── FastAPI Backend ────────────────────────────────────────
   api:
     build:
-      context: ./apps/api
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/api/Dockerfile
     container_name: chatapp_api
     restart: unless-stopped
     ports:
       - "8001:8001"
-    env_file:
-      - .env
     environment:
-      # Override DATABASE_URL to use Docker service name (not localhost)
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+      ALLOWED_ORIGINS: '["http://localhost:3000"]'
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      GROQ_MODEL: ${GROQ_MODEL}
+      APP_ENV: production
     depends_on:
       postgres:
         condition: service_healthy
-    volumes:
-      # Hot-reload: mount source for development
-      - ./apps/api:/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8001
 
-  # ── Next.js Frontend ───────────────────────────────────────
   web:
     build:
-      context: ./apps/web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+        BETTER_AUTH_URL: http://localhost:3000
+        DRIZZLE_DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+        NEXT_PUBLIC_WS_URL: ws://localhost:8001
+        NEXT_PUBLIC_APP_URL: http://localhost:3000
     container_name: chatapp_web
     restart: unless-stopped
     ports:
       - "3000:3000"
-    env_file:
-      - .env
+    environment:
+      NEXT_PUBLIC_WS_URL: ws://localhost:8001
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      FASTAPI_INTERNAL_URL: http://api:8001
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: http://localhost:3000
+      DRIZZLE_DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      NODE_ENV: production
     depends_on:
       - api
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8001
-      NEXT_PUBLIC_WS_URL: ws://localhost:8001
-
+      - postgres
+      
 volumes:
   postgres_data:
-    driver: local
